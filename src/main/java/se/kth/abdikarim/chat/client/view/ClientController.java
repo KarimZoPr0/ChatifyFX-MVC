@@ -39,7 +39,6 @@ public class ClientController implements IClientEventHandler
                     view.setOnlineLabel( "Online: " + online );
                 } );
             }
-            System.out.println("Thread has exited the loop");
         } );
         listenerThread.start();
     }
@@ -48,7 +47,6 @@ public class ClientController implements IClientEventHandler
     {
         listenerThread.interrupt();
         model.transmitMessage(":exit");
-        System.out.println( "Is thread Alive:" + listenerThread.isAlive() );
         Platform.exit();
     }
 
