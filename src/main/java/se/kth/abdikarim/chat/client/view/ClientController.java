@@ -8,6 +8,7 @@ public class ClientController implements IClientEventHandler
 {
     private final ClientModel model;
     private final ClientView view;
+    private Thread listenerThread;
 
     public ClientController( ClientModel model, ClientView view)
     {
@@ -20,14 +21,31 @@ public class ClientController implements IClientEventHandler
 
     public void handleListenToServer()
     {
-        model.startListening(
-                message -> Platform.runLater( ( ) -> view.displayMessage( message ) ),
-                online -> Platform.runLater( ( ) -> view.setOnlineLabel( "Online: " + online ) ) );
+        listenerThread = new Thread( ( ) ->
+        {
+            while ( !listenerThread.isInterrupted() )
+            {
+                int online = model.readOnline( );
+                String message = model.readMessage( );
+
+                Platform.runLater( ( ) ->
+                {
+                    if ( !message.isEmpty( ) )
+                    {
+                        view.appendTextArea( message + '\n' );
+                        view.setMessageFieldText( "" );
+                    }
+
+                    view.setOnlineLabel( "Online: " + online );
+                } );
+            }
+        } );
+        listenerThread.start();
     }
     @Override
     public void handleCloseRequest( )
     {
-        model.stopListeningToServer();
+        listenerThread.interrupt();
         model.transmitMessage(":exit");
         Platform.exit();
     }
