@@ -85,20 +85,15 @@ public class ClientView extends BorderPane
         return nameField;
     }
 
-
-    public void appendTextArea( String text )
-    {
-        textArea.appendText( text );
-    }
-
     public void setOnlineLabel( String text )
     {
         onlineLabel.setText( text );
     }
 
-    public void setMessageFieldText( String text )
+    public void displayMessage(String message)
     {
-        messageField.setText( text );
+        textArea.appendText( message + '\n' );
+        messageField.setText( "" );
     }
 
 
