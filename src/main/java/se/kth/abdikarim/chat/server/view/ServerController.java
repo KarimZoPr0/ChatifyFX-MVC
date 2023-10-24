@@ -12,40 +12,42 @@ import java.util.Date;
 
 public class ServerController
 {
-
     private final ServerModel model;
     private final ServerView view;
+    private boolean running = true;
 
-    public Thread listenThread;
 
     public ServerController( ServerModel model, ServerView view )
     {
         this.model = model;
         this.view = view;
 
-        handleServerListen( );
+        establishClientConnection( );
     }
 
-    public void handleServerListen( )
+    public void establishClientConnection( )
     {
-        listenThread = new Thread( ( ) ->
+        StringBuilder sb = new StringBuilder(  );
+        new Thread( ( ) ->
         {
             try
             {
-                while ( !listenThread.isInterrupted() )
+                while ( running  )
                 {
                     Socket socket = model.getServerSocket( ).accept( );
-
                     int numOfClients = model.incrementNumOfClients( );
-
                     InetAddress inetAddress = socket.getInetAddress( );
-                    Platform.runLater( ( ) ->
-                    {
-                        view.appendTextToTextArea( "Starting thread for client " + numOfClients + " at " + new Date( ) + '\n' );
-                        view.appendTextToTextArea( "Client " + numOfClients + "'s host name is " + inetAddress.getHostName( ) + '\n' );
-                        view.appendTextToTextArea( "Client " + numOfClients + "'s IP Address is " + inetAddress.getHostAddress( ) + '\n' );
 
-                    } );
+                    new Thread( () -> {
+
+                        sb.append( "Starting thread for client " ).append( numOfClients ).append( " at " ).append( new Date( ) ).append( '\n' );
+
+                        // Blocking! We don't want to block listenThread or the worker thread(JavaFX)
+                        sb.append( "Client " ).append( numOfClients ).append( "'s host name is " ).append( inetAddress.getHostName( ) ).append( '\n' );
+                        sb.append( "Client " ).append( numOfClients ).append( "'s IP Address is " ).append( inetAddress.getHostAddress( ) ).append( '\n' );
+
+                        Platform.runLater( ( ) -> view.appendToTextArea( sb.toString() ) );
+                    } ).start();
 
                     var fromClient = new DataInputStream( socket.getInputStream( ) );
                     var toClient = new DataOutputStream( socket.getOutputStream( ) );
@@ -55,52 +57,59 @@ public class ServerController
 
                     model.broadcastData( model.getNumOfClients( ), "" );
 
-                    new Thread( new HandleAClient( model.getNumOfClients( ) ) ).start( );
+                    new Thread( new HandleAClient( model.getNumOfClients( ) ) ).start();
                 }
+
+                System.out.println( "Ended server" );
+
             } catch ( IOException e )
             {
                 throw new RuntimeException( e );
             }
-        } );
-
-        listenThread.start();
+        } ).start();
     }
 
 
+    public void closeServer()
+    {
+        running = false;
+    }
+
     class HandleAClient implements Runnable
     {
-        DataInputStream fromClient;
         private final int id;
+        private boolean isDisconnected = false;
 
         public HandleAClient( int clientNo )
         {
             this.id = clientNo;
-            fromClient = model.getFromClient( model.getNumOfClients( ) - 1 );
         }
 
         @Override
         public void run( )
         {
+            DataInputStream fromClient =  model.getFromClient( model.getNumOfClients( ) - 1 );
             try
             {
-                while ( !listenThread.isInterrupted() )
+                while ( !isDisconnected )
                 {
 
                     String utf = fromClient.readUTF( );
-                    boolean isConnected = !utf.equals( ":exit" );
+                    isDisconnected = utf.equals( ":exit" );
                     String message = utf.trim( );
 
-                    if ( !isConnected ) model.disconnectClient( model.getNumOfClients( ) - 1 );
-                    model.broadcastData( model.getNumOfClients( ), isConnected ? message : "" );
+                    if ( isDisconnected ) model.disconnectClient( model.getNumOfClients( ) - 1 );
+                    model.broadcastData( model.getNumOfClients( ), !isDisconnected ? message : "" );
 
                     Platform.runLater( ( ) ->
                     {
-                        if ( !isConnected )
+                        if ( isDisconnected )
                         {
-                            view.appendTextToTextArea( "Client " + id + " Disconnected!" + '\n' );
+                            view.appendToTextArea( "Client " + id + " Disconnected!" + '\n' );
                         }
                     } );
                 }
+                System.out.println( "Stopped thread for client: " +  id);
             } catch ( IOException e )
             {
                 throw new RuntimeException( e );

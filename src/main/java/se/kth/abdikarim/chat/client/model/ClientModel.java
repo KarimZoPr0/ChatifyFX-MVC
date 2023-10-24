@@ -9,6 +9,7 @@ public class ClientModel
 {
     DataOutputStream toServer = null;
     DataInputStream fromServer = null;
+    Socket socket = null;
 
     public ClientModel( )
     {
@@ -19,7 +20,7 @@ public class ClientModel
     {
         try
         {
-            Socket socket = new Socket( "26.147.72.226", 8000 );
+            socket = new Socket( "26.147.72.226", 8000 );
             fromServer = new DataInputStream( socket.getInputStream( ) );
             toServer = new DataOutputStream( socket.getOutputStream( ) );
         } catch ( IOException ex )
@@ -32,12 +33,8 @@ public class ClientModel
     {
         try
         {
-            if ( !message.isEmpty( ) )
-            {
-                toServer.writeUTF( message );
-                toServer.flush( );
-            }
-
+            toServer.writeUTF( message );
+            toServer.flush( );
         } catch ( IOException e )
         {
             throw new RuntimeException( e );

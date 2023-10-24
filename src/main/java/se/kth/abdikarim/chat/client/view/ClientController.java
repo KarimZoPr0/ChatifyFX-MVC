@@ -1,10 +1,9 @@
 package se.kth.abdikarim.chat.client.view;
 
 import javafx.application.Platform;
-import se.kth.abdikarim.chat.client.IClientEventHandler;
 import se.kth.abdikarim.chat.client.model.ClientModel;
 
-public class ClientController implements IClientEventHandler
+public class ClientController
 {
     private final ClientModel model;
     private final ClientView view;
@@ -15,7 +14,6 @@ public class ClientController implements IClientEventHandler
         this.model = model;
         this.view = view;
 
-        view.setEventHandler( this );
         handleListenToServer();
     }
 
@@ -42,7 +40,6 @@ public class ClientController implements IClientEventHandler
         } );
         listenerThread.start();
     }
-    @Override
     public void handleCloseRequest( )
     {
         listenerThread.interrupt();
@@ -50,9 +47,9 @@ public class ClientController implements IClientEventHandler
         Platform.exit();
     }
 
-    @Override
     public void handleMessageSend( )
     {
-        model.transmitMessage( view.getMessage( ) );
+        String message = view.getMessage( );
+        model.transmitMessage( message );
     }
 }

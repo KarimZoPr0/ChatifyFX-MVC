@@ -15,7 +15,7 @@ public class ServerView extends ScrollPane
     }
 
 
-    public void appendTextToTextArea( String text )
+    public void appendToTextArea( String text )
     {
         textArea.appendText( text );
     }

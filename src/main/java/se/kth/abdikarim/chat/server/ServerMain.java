@@ -16,9 +16,9 @@ public class ServerMain extends Application
     {
         ServerModel model = new ServerModel( );
         ServerView view = new ServerView( );
-        new ServerController( model, view );
+        ServerController controller = new ServerController( model, view );
 
-        stage.setOnCloseRequest( e -> Platform.exit( ) );
+        stage.setOnCloseRequest( e -> Platform.exit());
 
         Scene scene = new Scene( view, 450, 200 );
         stage.setTitle( "MultiThreadServer" );

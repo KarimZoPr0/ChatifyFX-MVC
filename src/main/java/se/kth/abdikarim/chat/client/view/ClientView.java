@@ -1,5 +1,6 @@
 package se.kth.abdikarim.chat.client.view;
 
+import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
@@ -9,24 +10,26 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import se.kth.abdikarim.chat.client.IClientEventHandler;
+import javafx.stage.Stage;
+import se.kth.abdikarim.chat.client.model.ClientModel;
 
 public class ClientView extends BorderPane
 {
-    private IClientEventHandler eventHandler;
     private TextField messageField;
     private TextField nameField;
     private Label onlineLabel;
     private TextArea textArea;
+    private Stage stage;
 
-    public ClientView( )
+
+    public ClientView( ClientModel model, Stage stage )
     {
         super();
-        initChatView( );
-        addEventHandlers( );
+        this.stage = stage;
+        initChatView(new ClientController( model, this));
     }
 
-    private void initChatView( )
+    private void initChatView( ClientController controller )
     {
         // Pane for name
         HBox paneForName = new HBox( 15 );
@@ -46,6 +49,7 @@ public class ClientView extends BorderPane
         // Message Text Field
         messageField = new TextField( );
         messageField.setAlignment( Pos.BOTTOM_LEFT );
+        messageField.setOnAction( e -> controller.handleMessageSend() );
         paneMessage.getChildren( ).add( messageField );
 
         // Online status
@@ -64,15 +68,8 @@ public class ClientView extends BorderPane
         // Main Pane
         this.setCenter( new ScrollPane( textArea ) );
         this.setTop( pane );
-    }
 
-    public void setEventHandler( IClientEventHandler clientEventHandler )
-    {
-        this.eventHandler = clientEventHandler;
-    }
-    public void addEventHandlers(  )
-    {
-        messageField.setOnAction( e -> eventHandler.handleMessageSend() );
+        stage.setOnCloseRequest( e -> controller.handleCloseRequest() );
     }
 
     public TextField getMessageField( )
@@ -84,7 +81,6 @@ public class ClientView extends BorderPane
     {
         return nameField;
     }
-
 
     public void appendTextArea( String text )
     {
